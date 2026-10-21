@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#124a37"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="West Hove 4BBB">
+<title>West Hove 4BBB Matchplay Calculator</title>
+<style>
+:root{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#17372d;background:#f2f6f3}*{box-sizing:border-box}body{margin:0}main{max-width:760px;margin:auto;padding:0 14px 32px}.hero{background:linear-gradient(145deg,#0c392c,#267454);color:white;padding:30px 22px 26px;border-radius:0 0 22px 22px}.eyebrow{letter-spacing:.13em;font-size:.75rem;font-weight:700;text-transform:uppercase;opacity:.85}h1{font-size:clamp(1.5rem,5vw,2.15rem);line-height:1.15;margin:12px 0 8px}.hero p{margin:0;color:#e4f3eb}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:18px 0}.stat{background:#e1ece6;padding:12px 6px;text-align:center;border-radius:12px}.stat span{display:block;font-size:.74rem;color:#496459}.stat strong{display:block;font-size:1.55rem;margin-top:4px}section{background:white;border:1px solid #e0e9e3;border-radius:16px;padding:18px;margin:14px 0;box-shadow:0 4px 18px #123c2910}h2{font-size:1.13rem;margin:0 0 15px}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}label{display:block;font-size:.88rem;font-weight:650;margin-bottom:6px}input{width:100%;border:1.5px solid #b9cfc2;border-radius:10px;padding:13px;font-size:1.13rem;color:#183d2e;background:white}input:focus{outline:3px solid #b5e0c6;border-color:#1c674a}button{width:100%;background:#176346;border:0;color:white;font-weight:750;font-size:1.05rem;padding:15px;border-radius:11px;margin-top:19px;cursor:pointer}button:active{background:#0b4430}.muted{font-size:.84rem;color:#60766a;line-height:1.5}.error{color:#ad2929;font-weight:600;margin-top:10px}table{border-collapse:collapse;width:100%;font-size:.85rem}th,td{padding:10px 6px;text-align:center;border-bottom:1px solid #dce9e1}th:first-child,td:first-child{text-align:left}thead{background:#e8f2eb}.pill{display:inline-block;background:#176346;color:white;border-radius:7px;min-width:30px;padding:5px 7px;font-weight:750}.table-scroll{overflow-x:auto}.holes{min-width:470px;font-size:.78rem}.holes th,.holes td{padding:8px 4px;text-align:center}.holes th:first-child,.holes td:first-child{position:sticky;left:0;background:#e8f2eb;min-width:66px;font-weight:750}.hit{background:#ccebd8;font-weight:800;color:#10492f}.foot{text-align:center;font-size:.8rem;color:#63786d;padding:15px 8px}#results[hidden]{display:none}@media(max-width:360px){section{padding:13px}.fields{gap:10px}}
+</style>
+</head>
+<body>
+<main>
+<header class="hero"><div class="eyebrow">West Hove Golf Club · Yellow Tees</div><h1>4BBB Matchplay<br>Handicap Calculator</h1><p>Four players · 18 holes · 90% allowance</p></header>
+<div class="stats"><div class="stat"><span>Slope Rating</span><strong>114</strong></div><div class="stat"><span>Course Rating</span><strong>68.9</strong></div><div class="stat"><span>Par</span><strong>70</strong></div></div>
+<section><h2>Enter Handicap Index values</h2><div class="fields"><div><label for="p1">Player 1</label><input id="p1" type="number" min="-10" max="54" step="0.1" inputmode="decimal" placeholder="e.g. 12.4"></div><div><label for="p2">Player 2</label><input id="p2" type="number" min="-10" max="54" step="0.1" inputmode="decimal" placeholder="e.g. 16.8"></div><div><label for="p3">Player 3</label><input id="p3" type="number" min="-10" max="54" step="0.1" inputmode="decimal" placeholder="e.g. 21.5"></div><div><label for="p4">Player 4</label><input id="p4" type="number" min="-10" max="54" step="0.1" inputmode="decimal" placeholder="e.g. 24.7"></div></div><button id="calculate" type="button">Calculate Shots</button><p id="error" class="error" role="alert" hidden></p><p class="muted">Enter each player's current Handicap Index, not Course Handicap.</p></section>
+<section id="results" hidden aria-live="polite"><h2>Matchplay Results</h2><div class="table-scroll"><table><thead><tr><th>Player</th><th>Index</th><th>Course H'cap</th><th>Shots</th></tr></thead><tbody id="summary"></tbody></table></div><h2 style="margin-top:24px">Shots received by hole</h2><p class="muted">Numbers show strokes received on each hole. Swipe the table sideways if needed.</p><div class="table-scroll"><table class="holes" id="holes"></table></div><p class="muted">Strokes are allocated in Stroke Index order. For more than 18 strokes, a player receives a second stroke on the lowest-indexed holes.</p></section>
+<p class="foot">Unofficial independent calculator. Confirm yellow-tee ratings and Stroke Index order against the current club scorecard and competition terms before use.</p>
+</main>
+<script>
+'use strict';
+// Stroke indices by holes 1–18. Confirm against the current West Hove yellow-tee scorecard.
+const strokeIndices=[10,4,14,8,16,2,18,12,6,9,17,3,13,15,7,1,11,5];
+const roundGolf=n=>Math.floor(n+0.5);
+const escapeHTML=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+document.getElementById('calculate').addEventListener('click',()=>{
+ const inputs=[1,2,3,4].map(i=>document.getElementById('p'+i));
+ const err=document.getElementById('error');err.hidden=true;
+ const indexes=inputs.map(el=>Number(el.value));
+ if(inputs.some((el,i)=>el.value.trim()===''||!Number.isFinite(indexes[i])||indexes[i]<-10||indexes[i]>54)){
+   err.textContent='Please enter a valid Handicap Index for all four players (−10 to 54).';err.hidden=false;document.getElementById('results').hidden=true;return;
+ }
+ const course=indexes.map(hi=>roundGolf(hi*114/113+68.9-70));
+ const lowest=Math.min(...course);
+ const shots=course.map(ch=>roundGolf((ch-lowest)*0.9));
+ document.getElementById('summary').innerHTML=course.map((ch,i)=>`<tr><td>Player ${i+1}${ch===lowest?' ★':''}</td><td>${indexes[i].toFixed(1)}</td><td>${ch}</td><td><span class="pill">${shots[i]}</span></td></tr>`).join('');
+ let html='<thead><tr><th>Hole</th>'+strokeIndices.map((_,i)=>`<th>${i+1}</th>`).join('')+'</tr></thead><tbody><tr><td>SI</td>'+strokeIndices.map(si=>`<td>${si}</td>`).join('')+'</tr>';
+ for(let p=0;p<4;p++){
+   html+=`<tr><td>Player ${p+1}</td>`;
+   for(const si of strokeIndices){const n=Math.floor(shots[p]/18)+(si<=shots[p]%18?1:0);html+=`<td class="${n?'hit':''}">${n||'–'}</td>`;}
+   html+='</tr>';
+ }
+ document.getElementById('holes').innerHTML=html+'</tbody>';
+ document.getElementById('results').hidden=false;
+ document.getElementById('results').scrollIntoView({behavior:'smooth',block:'start'});
+});
+</script>
+</body></html>
